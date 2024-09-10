@@ -42,9 +42,9 @@ class RPC {
 
     encode(op, data) {
         const dataString = JSON.stringify(data);
-        const packet = Buffer.alloc(dataString.length + 8);
+        const packet = Buffer.alloc(Buffer.byteLength(dataString) + 8);
         packet.writeInt32LE(op, 0);
-        packet.writeInt32LE(dataString.length, 4);
+        packet.writeInt32LE(Buffer.byteLength(dataString), 4);
         packet.write(dataString, 8);
         return packet;
     }
