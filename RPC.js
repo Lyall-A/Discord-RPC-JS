@@ -50,13 +50,15 @@ class RPC {
     }
 
     decode(data) {
-        const raw = data.slice(8);
+        const op = data.readInt32LE(0);
+        const length = data.readInt32LE(4);
+        const raw = data.subarray(8, length + 8);
         const string = raw.toString();
         let json = null;
         try { json = JSON.parse(string) } catch (err) {  }
         return {
-            op: data.readInt32LE(0),
-            length: data.readInt32LE(4),
+            op,
+            length,
             raw,
             string,
             json
