@@ -12,15 +12,15 @@ class RPC {
         return new Promise((resolve, reject) => {
             this._connection = net.createConnection({ path: this.ipcPath });
             this._connection.on("connect", () => {
-                this.sendHandshake();
                 this.call("ipc-connect");
+                this.sendHandshake();
                 resolve();
             });
             this._connection.on("data", data => {
                 const decoded = this.decode(data);
+                this.call("ipc-message", decoded);
                 if (decoded.json?.cmd) this.call(decoded.json.cmd, decoded);
                 if (decoded.json?.evt) this.call(decoded.json.evt, decoded);
-                this.call("ipc-message", decoded);
             });
         });
     }
