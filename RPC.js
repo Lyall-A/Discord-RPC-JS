@@ -10,18 +10,20 @@ class RPC {
     // TODO: make decent
     async connectIPC() {
         return new Promise((resolve, reject) => {
-            this._connection = net.createConnection({ path: this.ipcPath });
-            this._connection.on("connect", () => {
+            this.ipcConnection = net.createConnection({ path: this.ipcPath });
+            this.ipcConnection.on("connect", () => {
                 this.call("ipc-connect");
                 this.sendHandshake();
                 resolve();
             });
-            this._connection.on("data", data => {
+            this.ipcConnection.on("data", data => {
                 const decoded = this.decode(data);
                 this.call("ipc-message", decoded);
                 if (decoded.json?.cmd) this.call(decoded.json.cmd, decoded);
                 if (decoded.json?.evt) this.call(decoded.json.evt, decoded);
             });
+            this.ipcConnection.on("end", () => this.call("ipc-end"));
+            this.ipcConnection.on("error", err => this.call("ipc-error", err));
         });
     }
 
@@ -70,14 +72,14 @@ class RPC {
     }
 
     sendHandshake() {
-        this._connection.write(this.encode(this.opCodes.HANDSHAKE, {
+        this.ipcConnection.write(this.encode(this.opCodes.HANDSHAKE, {
             v: 1,
             client_id: this._options.clientId
         }));
     }
 
     sendCommand(cmd, args) {
-        this._connection.write(this.encode(this.opCodes.FRAME, {
+        this.ipcConnection.write(this.encode(this.opCodes.FRAME, {
             cmd,
             args,
             nonce: this.generateNonce()
